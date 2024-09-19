@@ -17,5 +17,7 @@
         "react"
     ],
     "rules": {
+        "linebreak-style": ["error", "windows"] 
+        // modifi car erreurs -> Expected linebreaks to be 'LF' but found 'CRLF'  linebreak-style 
     }
 }
