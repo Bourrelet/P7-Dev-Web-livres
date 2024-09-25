@@ -2,6 +2,19 @@ const express = require('express');
 
 const app = express();
 
+mongoose.connect('mongodb+srv://AnyVegetable:Radis@evap6ocr.xqhjd.mongodb.net/?retryWrites=true&w=majority&appName=EvaP6ocr',
+  { useNewUrlParser: true,
+    useUnifiedTopology: true })
+  .then(() => console.log('Connexion à MongoDB réussie !'))
+  .catch(() => console.log('Connexion à MongoDB échouée !'));
+
+
+
+const mongoose = require('mongoose');
+
+
+
+
 app.use(express.json()); // permet de traiter les req en json
 
 app.use((req, res, next) => { // configuration des CORS
