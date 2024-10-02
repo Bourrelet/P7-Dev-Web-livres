@@ -1,51 +1,23 @@
 const express = require('express');
-
 const app = express();
+const cors = require('cors');
 
-// MONGODB
-// MONGODB
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://AnyVegetable:Crochet@evap6ocr.xqhjd.mongodb.net/?retryWrites=true&w=majority&appName=EvaP6ocr";
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-}
-run().catch(console.dir);
-// MONGODB
-// MONGODB
+const authRoutes = require('./routes/authRoutes');
+const bookRoutes = require('./routes/bookRoutes');
 
 
-app.use(express.json()); // permet de traiter les req en json
 
-app.use((req, res, next) => { // configuration des CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    next();
-  });
+app.use(express.json()); // traitement auto des body req en json
+app.use(cors()); // configuration automatique des CORS
 
-  app.post('/api/auth/signup',(req, res, next) => {
-    // SIGN UP
-    next();
-  });
+app.use('/api/auth', authRoutes); 
+app.use('/api/books', bookRoutes);
+
+
+  // app.post('/api/auth/signup',(req, res, next) => {
+  //   // SIGN UP
+  //   next();
+  // });
   // app.post('/api/auth/login',(req, res, next) => {
   //   // SIGN IN
   //   next();
