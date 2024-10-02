@@ -42,10 +42,10 @@ app.use((req, res, next) => { // configuration des CORS
     next();
   });
 
-  // app.post('/api/auth/signup',(req, res, next) => {
-  //   // SIGN UP
-  //   next();
-  // });
+  app.post('/api/auth/signup',(req, res, next) => {
+    // SIGN UP
+    next();
+  });
   // app.post('/api/auth/login',(req, res, next) => {
   //   // SIGN IN
   //   next();
