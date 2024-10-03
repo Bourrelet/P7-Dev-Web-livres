@@ -1,5 +1,5 @@
 const app = require('./app');
-const connectMongoose = require('./db'); // Connexion via db.js
+const connectMongoose = require('./config/db'); // Connexion via db.js
 const config = require('./config');
 
 connectMongoose(); // Lancer la connexion à MongoDB
