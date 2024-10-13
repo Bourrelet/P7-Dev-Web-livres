@@ -1,41 +1,41 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs'); // ??? needed ???
+const jwt = require('jsonwebtoken'); // ??? needed ???
 const User = require('../models/User');  // Modèle User qu'on a créé
-// need importer les outils ?
-// need importer  config pour secretjwt ?
-
-exports.signupUser = async (req, res) => {
-
-  const hashedPassword = await bcrypt.hash(req.body.password, 10); // hashage PW
-
-  const newUser = new User({ // Creation nouvel objet modele
-    email: req.body.email,
-    password: hashedPassword,
-  });
-
-  await newUser.save(); // upload objet modele
-
-  res.status(201).json({ message: 'Utilisateur créé avec succès' }); // reponse succes console frontend
-
-  };
 
 
+exports.signupUser = async (req, res, next) => {  // Done Promise.All() pas possible ici car la deuxieme requete depend de la premiere.
+  try {
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);  // Hachage du mot de passe
 
-exports.loginUser = async (req, res) => {
+    const newUser = new User({  // Création de l'objet avec le mot de passe haché
+      email: req.body.email,
+      password: hashedPassword,
+    });
 
-  const user = await User.findOne({ email: req.body.email }); // recherche le mail de la requete login dans la DB
+    await newUser.save();  // Sauvegarde de l'utilisateur dans la base de données
 
-  if (!user) {
-    return res.status(400).json({ message: 'Utilisateur non trouvé' }); // si pas trouve -> message d'erreur console frontend
+    res.status(201).json({ message: 'Utilisateur créé avec succès' });  // Réponse de succès
+  } catch (error) {
+    next(error);
   }
+};
 
-  const isMatch = await bcrypt.compare(req.body.password, user.password); // comparaison pw requette avec pw DB
-  if (!isMatch) {
-    return res.status(400).json({ message: 'Mot de passe incorrect' }); // si pas match -> message console frontend
+exports.loginUser = async (req, res, next) => { // On verifie les erreurs de logique metier synchrones avec IF ; try/catch sert juste a securiser les op asynchrones.
+  try {  // Dans req.body on a le mail et le pw cryptes.
+    const user = await User.findOne({ email: req.body.email });  // Si la DB plante par xpl -> catch()
+    if (!user) {
+      return res.status(400).json({ message: 'Utilisateur non trouvé' });  // Logique metier -> synchrone -> IF
+    }
+
+    const isMatch = await bcrypt.compare(req.body.password, user.password);  
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Mot de passe incorrect' });  
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });  // Création du token avec dans le payload la variable userID qui contient l'id automatique de la DB de l'objet User
+    res.json({ token });  // Réponse avec le token
+
+  } catch (error) {
+    next(error);
   }
-
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' }); // creation du token
-
-  res.json({ token }); // envoi du token en reponse.
-  
-
 };
