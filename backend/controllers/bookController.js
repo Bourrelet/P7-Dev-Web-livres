@@ -1,4 +1,7 @@
 const Book = require('../models/Book');
+const fs = require('fs');  // Pour supprimer le fichier image du disque
+const path = require('path');
+const authMiddleware = require('../middleware/auth');  // Middleware d'authentification
 
 exports.getBooks = async (req, res, next) => {
 
@@ -35,7 +38,31 @@ exports.getBestRatedBooks = async (req, res, next) => {
 };
 
 exports.deleteBook = async (req, res) => {
+  try {
+    const bookId = req.params.id; // On  recupere l'ID du livre grace au paranetre dynamique
 
+    const book = await Book.findById(bookId); // Methode mongoose pour trouver le livre par correspondance.
+    if (!book) { // En fait si mongoose ne trouve pas, il renvoit 'null' mais ne genere pas d'erreur -> Need une business error.
+      return res.status(404).send({ error: 'Livre non trouvé' }); // Sinon on pourrait throw new Error pour laisser le catch gerer ca avec le MW.
+    }
+
+    // Vérifier si l'utilisateur authentifié est bien celui qui a créé le livre
+    if (book.userId != req.user.userId) {
+      return res.status(403).send({ error: '403: unauthorized request' });
+    }
+
+    await Book.findByIdAndDelete(bookId);
+
+    // Supprimer l'image associée si elle existe
+    const imagePath = path.join(__dirname, '../uploads/', book.image);
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);  // Supprimer l'image
+    }
+
+    res.status(200).send({ message: 'Livre et image supprimés avec succès' });
+  } catch (error) {
+    next(error); // Passer l'erreur au middleware de gestion d'erreurs
+  }
 };
 
 exports.rateBook = async (req, res) => {

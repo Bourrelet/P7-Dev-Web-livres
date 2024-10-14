@@ -1,4 +1,4 @@
-module.exports = (req, res, next) => {  
+module.exports = (req, res, next) => {  // async ???
     try {
       const token = req.header('Authorization')?.replace('Bearer ', ''); // Extrait le token de l'header
       const decoded = jwt.verify(token, process.env.JWT_SECRET); // Decode le token
