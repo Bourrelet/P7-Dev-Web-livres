@@ -12,7 +12,7 @@ exports.signupUser = async (req, res, next) => {  // Done Promise.All() pas poss
       password: hashedPassword,
     });
 
-    await newUser.save();  // Sauvegarde de l'utilisateur dans la base de données
+    await newUser.save();  // Sauvegarde de l'utilisateur dans la base de données la DB va automatiquement lui attribuer un _id
 
     res.status(201).json({ message: 'Utilisateur créé avec succès' });  // Réponse de succès
   } catch (error) {

@@ -54,7 +54,7 @@ exports.deleteBook = async (req, res) => {
     await Book.findByIdAndDelete(bookId);
 
     // Supprimer l'image associée si elle existe
-    const imagePath = path.join(__dirname, '../uploads/', book.image);
+    const imagePath = path.join(__dirname, '../uploads/', book.image); // ?? C'est quoi l'URL complete finalement? book.image c'est le fichier ... c'est un string .. donmc une url ?
     if (fs.existsSync(imagePath)) {
       fs.unlinkSync(imagePath);  // Supprimer l'image
     }
@@ -69,8 +69,37 @@ exports.rateBook = async (req, res) => {
 
 };
 
-exports.addBook = async (req, res) => {
+exports.addBook = async (req, res, next) => {
+  try {
+    // Extract the fields from the request
+    const bookData = JSON.parse(req.body.book); // express.json() ne fonctionne que pour le format application/json. Ici on a un FormData ; donc on doit utiliser JSON.parse (a l'ancienne).
+    const image = req.file; // Multer analyse la requete et extrait le fichier dans un objet image
 
+    // If no file or book information, send an error
+    if (!bookData || !image) { // si l'un  des 2 est null ou undefined. erreur metier.
+      return res.status(400).json({ message: 'Book details and image are required.' });
+    }
+
+    // Create a new book instance
+    const newBook = new Book({
+      title: bookData.title,
+      author: bookData.author,
+      userId: req.user.userId, // directement l'id de l'humain plutot que celui de la requete ...
+      imageUrl: image.path, // Using `imageUrl` to match the schema definition
+      year: bookData.year, // Année de publication du livre
+      genre: bookData.genre, // Genre du livre
+      averageRating: 0, // Initialiser la note moyenne à 0
+      ratings: [] // Initialiser avec un tableau vide
+    });
+
+    // Save the book to the database avec un _id gratuit pas cher.
+    await newBook.save();
+
+    // Respond with success message
+    res.status(201).json({ message: 'Book successfully added!', book: newBook });
+  } catch (error) {
+    next(error); // Pass any error to the error-handling middleware
+  }
 };
 
 exports.updateBook = async (req, res) => {
