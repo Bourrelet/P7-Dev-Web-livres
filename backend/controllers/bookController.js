@@ -1,7 +1,6 @@
 const Book = require('../models/Book');
 const fs = require('fs');  // Pour supprimer le fichier image du disque
 const path = require('path');
-const authMiddleware = require('../middleware/auth');  // Middleware d'authentification
 
 exports.getBooks = async (req, res, next) => {
 

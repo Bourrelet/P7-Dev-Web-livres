@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router(); // Crée une nouvelle instance de Router
+const upload = require('../middleware/upload');
 const bookController = require('../controllers/bookController');
 
 
@@ -18,10 +19,10 @@ router.delete('/:id', bookController.deleteBook);
 router.post('/:id/rating', bookController.rateBook);
     // rating by user.
 
-router.post('/:id', bookController.addBook); 
+router.post('/:id', upload.single('image'), bookController.addBook); 
     // add book
 
-router.put('/:id', bookController.updateBook);
+router.put('/:id', upload.single('image'), bookController.updateBook);
     // update book
 
 
