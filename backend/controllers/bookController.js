@@ -102,7 +102,73 @@ exports.addBook = async (req, res, next) => {
   }
 };
 
-exports.updateBook = async (req, res) => {
 
+exports.updateBook = async (req, res, next) => {
+  try {
+    const { id } = req.params; // Extract book ID from request params
+
+        // Find the book by ID
+    const book = await Book.findById(id);
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found.' });
+    }
+
+    // Check if the authenticated user is the creator of the book
+    if (book.userId !== req.user.userId) {
+      return res.status(403).json({ message: 'Unauthorized request.' });
+    }
+
+    // If neither body nor file is provided, return an error
+    if (!req.file && !req.body) {
+      return res.status(400).json({ message: 'No data provided for update.' });
+    }
+
+    // Execute file and body updates concurrently
+    await Promise.all([updateFile(book, req), updateBody(book, req)]); // pas besoin de stocker les resultats des promesses.
+
+    // Respond with success message
+    res.status(200).json({ message: 'Book successfully updated!' });
+  } catch (error) {
+    next(error);
+  }
 };
 
+
+// HELPERS UPDATE FUNCTION
+// HELPERS UPDATE FUNCTION
+
+
+//Helper req.file ->
+const updateFile = async (book, req) => {
+  if (req.file) {
+    if (!req.file.mimetype.startsWith('image/')) { // verifie que c bien une image grace au mimetype
+      console.error('Invalid file type: Only image files are allowed.');
+      throw new Error('Only image files are allowed!'); // On balance l'erreur expres pour qu'elle remonte la chaine d'appel. 
+    }
+
+    // Delete old image if it exists
+    if (book.imageUrl) { // on verifie que c'est bien la bonne propriete.
+      try { // await fs.promises -> Pour etre sur que la suppression soit faite avant de passer a l'update.
+        await fs.promises.unlink(book.imageUrl); 
+      } catch (err) {
+        console.error('Failed to delete old image:', err);
+        throw new Error('Failed to delete the old image, please try again.'); // Comme une bulle (Helper -> controleur -> MW)
+      } 
+    }
+
+    // Update the book with the new image URL
+    return Book.findByIdAndUpdate(book._id, { imageUrl: req.file.path }, { new: true, runValidators: true });
+  }
+  return null;
+};
+
+// Helper req.body
+const updateBody = async (book, req) => {
+  if (req.body) { 
+    return Book.findByIdAndUpdate(book._id, req.body, { new: true, runValidators: true }); // runValidators permet de s'assurer que le modele est respecte pour les propriete renseignees.
+  }
+  return null;
+};
+
+// HELPERS UPDATE FUNCTION
+// HELPERS UPDATE FUNCTION
