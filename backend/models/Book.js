@@ -16,7 +16,7 @@ const bookSchema = new mongoose.Schema({
   ],  // Tableau d'évaluations
   averageRating: { type: Number, default: 0 },
 }, {
-  timestamps: true
+  timestamps: true  // ???
 });
 
 module.exports = mongoose.model('Book', bookSchema);

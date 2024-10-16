@@ -65,9 +65,66 @@ exports.deleteBook = async (req, res) => {
   }
 };
 
-exports.rateBook = async (req, res) => {
 
-};
+exports.rateBook = async (req, res, next) => {
+
+  // Probleme de coherence entre req.body et le modele
+  // req.body = { userId: String, rating: Number }
+  // ratings: [
+  //     {
+  //       userId: { type: String, required: true },
+  //       grade: { type: Number, required: true, min: 0, max: 5 }
+  //     }
+  // Probleme de coherence entre req.body et le modele
+    
+    
+    try {
+      //extraction variables
+      
+      const bookId = req.params.id; // On recupere l'id du book grace au parametre dynamique
+      const userId = req.body.userId; // extrait le userId de req.body
+      const grade = req.body.rating; // extrait rating de req.body et on le renomme correctement.
+      
+      // On pushera cet Objet dans la propriete-Array "ratings" de book -> conformement au modele
+      const userRating = { userId, grade }; 
+  
+      // Verification logique metier.
+  
+      if (grade < 0 || grade > 5) { // On s'assure que la note est OK.
+        return res.status(400).json({ message: 'Rating must be between 0 and 5.' });
+      }
+     
+      const book = await Book.findById(bookId);  // Essaye de recuperer le livre de la DB
+      if (!book) { // Si "null" -> on retourne un msg d'erreur au front.
+        return res.status(404).json({ message: 'Book not found.' });
+      }
+  
+      // Vérifier si l'utilisateur a déjà évalué ce livre
+      const alreadyRated = book.ratings.find((rate) => rate.userId === userId); // JS classique
+      if (alreadyRated) { 
+        return res.status(400).json({ message: 'User has already rated this book.' });
+      }
+      
+      // Verifications de logique metier terminees -> 
+      
+      book.ratings.push(userRating); // On push notre objet conformement au modele
+      
+  
+      // Calculer la nouvelle note moyenne
+      const totalRatings = book.ratings.length;
+      const sumRatings = book.ratings.reduce((sum, rate) => sum + rate.grade, 0); // JS classique
+      book.averageRating = sumRatings / totalRatings;
+  
+      // Sauvegarder les modifications dans la base de données
+      await book.save();
+  
+      // Répondre avec le livre mis à jour
+      res.status(200).json(book);
+    } catch (error) {
+      next(error); // Passer l'erreur au middleware de gestion des erreurs
+    }
+  };
+  
 
 exports.addBook = async (req, res, next) => {
   try {
