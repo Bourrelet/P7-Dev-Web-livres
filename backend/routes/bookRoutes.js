@@ -13,16 +13,16 @@ router.get('/:id', bookController.getBook);
 router.get('/bestrating', bookController.getBestRatedBooks);
     // gallerie best books
 
-router.delete('/:id', bookController.deleteBook);
+router.delete('/:id', authMiddleware, bookController.deleteBook);
     // delete book
 
-router.post('/:id/rating', bookController.rateBook);
+router.post('/:id/rating', authMiddleware, bookController.rateBook);
     // rating by user.
 
-router.post('/:id', upload.single('image'), bookController.addBook); 
+router.post('/:id', authMiddleware, upload.single('image'), bookController.addBook); 
     // add book
 
-router.put('/:id', upload.single('image'), bookController.updateBook);
+router.put('/:id', authMiddleware, upload.single('image'), bookController.updateBook);
     // update book
 
 

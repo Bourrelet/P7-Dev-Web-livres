@@ -1,6 +1,7 @@
 const Book = require('../models/Book');
 const fs = require('fs');  // Pour supprimer le fichier image du disque
 const path = require('path');
+const sharp = require('sharp');
 
 exports.getBooks = async (req, res, next) => {
 
@@ -125,38 +126,47 @@ exports.rateBook = async (req, res, next) => {
   };
   
 
-exports.addBook = async (req, res, next) => {
-  try {
-    // Extract the fields from the request
-    const bookData = JSON.parse(req.body.book); // express.json() ne fonctionne que pour le format application/json. Ici on a un FormData ; donc on doit utiliser JSON.parse (a l'ancienne).
-    const image = req.file; // Multer analyse la requete et extrait le fichier dans un objet image
-
-    // If no file or book information, send an error
-    if (!bookData || !image) { // si l'un  des 2 est null ou undefined. erreur metier.
-      return res.status(400).json({ message: 'Book details and image are required.' });
+  exports.addBook = async (req, res, next) => {
+    try {
+      // Extract the fields from the request
+      const bookData = JSON.parse(req.body.book); // express.json() ne fonctionne que pour le format application/json. Ici on a un FormData ; donc on doit utiliser JSON.parse (a l'ancienne).
+      const image = req.file; // Multer analyse la requete et extrait le fichier dans un objet image
+  
+      // If no file or book information, send an error
+      if (!bookData || !image) { // si l'un des 2 est null ou undefined. erreur metier.
+        return res.status(400).json({ message: 'Book details and image are required.' });
+      }
+  
+      // Save the image using Sharp
+      const imageName = `${Date.now()}.jpeg`;
+      const outputPath = path.join(__dirname, '../images', imageName); // chemin lcal -> URL disque
+  
+      await sharp(image.buffer)  // Recuperation du fichier dans la RAM
+        .resize({ width: 470, height: 600 })  // Redimensionne l'image
+        .toFormat('jpeg')  // Convertit au format jpeg
+        .toFile(outputPath);  // Sauvegarde sur le disque dans le dossier images/
+  
+      // Create a new book instance
+      const newBook = new Book({
+        title: bookData.title,
+        author: bookData.author,
+        userId: req.user.userId, // directement l'id de l'humain plutot que celui de la requete ...
+        imageUrl: '/images/' + imageName, // Utiliser le nom de l'image pour créer un chemin accessible via le serveur
+        year: bookData.year, // Année de publication du livre
+        genre: bookData.genre, // Genre du livre
+        averageRating: 0, // Initialiser la note moyenne à 0
+        ratings: [] // Initialiser avec un tableau vide
+      });
+  
+      // Save the book to the database avec un _id gratuit pas cher.
+      await newBook.save();
+  
+      // Respond with success message
+      res.status(201).json({ message: 'Book successfully added!', book: newBook });
+    } catch (error) {
+      next(error); // Pass any error to the error-handling middleware
     }
-
-    // Create a new book instance
-    const newBook = new Book({
-      title: bookData.title,
-      author: bookData.author,
-      userId: req.user.userId, // directement l'id de l'humain plutot que celui de la requete ...
-      imageUrl: image.path, // NEED SHARP
-      year: bookData.year, // Année de publication du livre
-      genre: bookData.genre, // Genre du livre
-      averageRating: 0, // Initialiser la note moyenne à 0
-      ratings: [] // Initialiser avec un tableau vide
-    });
-
-    // Save the book to the database avec un _id gratuit pas cher.
-    await newBook.save();
-
-    // Respond with success message
-    res.status(201).json({ message: 'Book successfully added!', book: newBook });
-  } catch (error) {
-    next(error); // Pass any error to the error-handling middleware
-  }
-};
+  };
 
 
 exports.updateBook = async (req, res, next) => {
