@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router(); // Crée une nouvelle instance de Router
 const upload = require('../middleware/upload');
+const authMiddleware = require('../controllers/authMiddleware');
 const bookController = require('../controllers/bookController');
+
 
 
 router.get('/', bookController.getBooks);
