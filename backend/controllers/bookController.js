@@ -141,7 +141,7 @@ exports.addBook = async (req, res, next) => {
       title: bookData.title,
       author: bookData.author,
       userId: req.user.userId, // directement l'id de l'humain plutot que celui de la requete ...
-      imageUrl: image.path, // Using `imageUrl` to match the schema definition
+      imageUrl: image.path, // NEED SHARP
       year: bookData.year, // Année de publication du livre
       genre: bookData.genre, // Genre du livre
       averageRating: 0, // Initialiser la note moyenne à 0
