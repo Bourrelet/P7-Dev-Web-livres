@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router(); // Crée une nouvelle instance de Router
 const upload = require('../middleware/upload');
-const authMiddleware = require('../controllers/authMiddleware');
+const authMiddleware = require('../middleware/auth');
 const bookController = require('../controllers/bookController');
 
 
@@ -9,11 +9,13 @@ const bookController = require('../controllers/bookController');
 router.get('/', bookController.getBooks);
     // gallerie
 
+router.get('/bestrating', bookController.getBestRatedBooks);
+ // gallerie best books
+
+
 router.get('/:id', bookController.getBook);
     // Recupere 1 livre en particulier
     
-router.get('/bestrating', bookController.getBestRatedBooks);
-    // gallerie best books
 
 router.delete('/:id', authMiddleware, bookController.deleteBook);
     // delete book
@@ -21,8 +23,14 @@ router.delete('/:id', authMiddleware, bookController.deleteBook);
 router.post('/:id/rating', authMiddleware, bookController.rateBook);
     // rating by user.
 
-router.post('/:id', authMiddleware, upload.single('image'), bookController.addBook); 
+router.post('/', authMiddleware, upload.single('image'), bookController.addBook);  // -> Erreur de routage j'avais mis /:id ... forcement ca marchait pas.
     // add book
+// router.post('/:id', authMiddleware, upload.single('image'), (req, res, next) => {
+//     console.log('Multer middleware exécuté');
+//     next();
+//   }, bookController.addBook);
+  
+
 
 router.put('/:id', authMiddleware, upload.single('image'), bookController.updateBook);
     // update book

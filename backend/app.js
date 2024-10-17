@@ -12,7 +12,7 @@ const errorHandler = require('./middleware/errorHandler');
 app.use(express.json()); // traitement auto des body req en json
 app.use(cors()); // configuration automatique des CORS
 
-app.use('/uploads', express.static('images')); // ???
+app.use('/images', express.static('images')); // -> Acces au dossier image pour express.
 
 app.use('/api/auth', authRoutes); 
 app.use('/api/books', bookRoutes);

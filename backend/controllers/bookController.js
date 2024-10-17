@@ -4,8 +4,9 @@ const path = require('path');
 const sharp = require('sharp');
 
 exports.getBooks = async (req, res, next) => {
-
+  
     try {
+      console.log("lancement getBooks");
         const books = await Book.find();  // Récupérer tous les livres de la base de données
         res.status(200).json(books);  // Renvoie un tableau JSON avec tous les livres
         }   catch (error) {
@@ -13,8 +14,10 @@ exports.getBooks = async (req, res, next) => {
     }
 };
 
-exports.getBook = async (req, res) => {
+exports.getBook = async (req, res, next) => {
+  
     try {
+      console.log("lancement getBook");
         const bookId = req.params.id;  // Récupère le parametre dynamique de l'url de la requete.
         const book = await Book.findById(bookId);  // Cherche le livre correspondant a l'id
     
@@ -29,7 +32,9 @@ exports.getBook = async (req, res) => {
 };
 
 exports.getBestRatedBooks = async (req, res, next) => {
+  
     try {
+      console.log("lancement getBestRatedBooks");
       const bestBooks = await Book.find().sort({ averageRating: -1 }).limit(3);  // .sort() & .limit() -> methodes magiques Mongoose.
       res.status(200).json(bestBooks);  // Renvoie les 3 livres avec la meilleure note
     } catch (error) {
@@ -37,20 +42,25 @@ exports.getBestRatedBooks = async (req, res, next) => {
     }
 };
 
-exports.deleteBook = async (req, res) => {
+exports.deleteBook = async (req, res, next) => {
+  
   try {
+    console.log("lancement deleteBook");
     const bookId = req.params.id; // On  recupere l'ID du livre grace au paranetre dynamique
 
     const book = await Book.findById(bookId); // Methode mongoose pour trouver le livre par correspondance.
+    
     if (!book) { // En fait si mongoose ne trouve pas, il renvoit 'null' mais ne genere pas d'erreur -> Need une business error.
       return res.status(404).send({ error: 'Livre non trouvé' }); // Sinon on pourrait throw new Error pour laisser le catch gerer ca avec le MW.
     }
-
+    console.log("Livre recupere");
+    console.log(book);
     // Vérifier si l'utilisateur authentifié est bien celui qui a créé le livre
-    if (book.userId != req.user.userId) {
+    console.log(book.userId, req.user.userId);
+    if (book.userId != req.user.userId) { // -> UNDEFINED ???
       return res.status(403).send({ error: '403: unauthorized request' });
     }
-
+   
     await Book.findByIdAndDelete(bookId);
 
     // Supprimer l'image associée si elle existe
@@ -67,6 +77,7 @@ exports.deleteBook = async (req, res) => {
 
 
 exports.rateBook = async (req, res, next) => {
+  
 
   // Probleme de coherence entre req.body et le modele
   // req.body = { userId: String, rating: Number }
@@ -79,6 +90,7 @@ exports.rateBook = async (req, res, next) => {
     
     
     try {
+      console.log("lancement rateBook");
       //extraction variables
       
       const bookId = req.params.id; // On recupere l'id du book grace au parametre dynamique
@@ -127,7 +139,9 @@ exports.rateBook = async (req, res, next) => {
   
 
   exports.addBook = async (req, res, next) => {
+    
     try {
+      console.log("on lance le controlleur addbook");
       // Extract the fields from the request
       const bookData = JSON.parse(req.body.book); // express.json() ne fonctionne que pour le format application/json. Ici on a un FormData ; donc on doit utiliser JSON.parse (a l'ancienne).
       const image = req.file; // Multer analyse la requete et extrait le fichier dans un objet image
@@ -157,7 +171,7 @@ exports.rateBook = async (req, res, next) => {
         averageRating: 0, // Initialiser la note moyenne à 0
         ratings: [] // Initialiser avec un tableau vide
       });
-  
+      console.log(newBook);
       // Save the book to the database avec un _id gratuit pas cher.
       await newBook.save();
   
@@ -171,6 +185,7 @@ exports.rateBook = async (req, res, next) => {
 
 exports.updateBook = async (req, res, next) => {
   try {
+    console.log("lancement updateBook");
     const { id } = req.params; // Extract book ID from request params
 
         // Find the book by ID
