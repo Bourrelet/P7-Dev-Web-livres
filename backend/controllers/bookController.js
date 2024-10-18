@@ -8,6 +8,7 @@ exports.getBooks = async (req, res, next) => {
     try {
       console.log("lancement getBooks");
         const books = await Book.find();  // Récupérer tous les livres de la base de données
+        // console.log(books);
         res.status(200).json(books);  // Renvoie un tableau JSON avec tous les livres
         }   catch (error) {
         next(error);  // Passe l'erreur au middleware de gestion d'erreurs
@@ -155,20 +156,20 @@ exports.rateBook = async (req, res, next) => {
         'image/jpg': 'jpg',
         'image/jpeg': 'jpg',
         'image/png': 'png'
-      };
-
-      
+      };      
       const extension = MIME_TYPES[image.mimetype];
 
       // Save the image using Sharp
       const imageName = `${Date.now()}` + '.'+ extension;
+      console.log("imageName -> ", imageName)
       const outputPath = path.join(__dirname, '../images', imageName); // chemin lcal -> URL disque
-  
+      console.log("outputPath -> ", outputPath);
+      console.log("image ram", image.buffer)
       await sharp(image.buffer)  // Recuperation du fichier dans la RAM
-        // .resize({ width: 470, height: 600 })  // Redimensionne l'image
+        .resize({ width: 470, height: 600 })  // Redimensionne l'image
         .toFormat(extension)  // Convertit au format jpeg
         .toFile(outputPath);  // Sauvegarde sur le disque dans le dossier images/
-  
+      
       // Create a new book instance
       const newBook = new Book({
         title: bookData.title,
@@ -181,6 +182,7 @@ exports.rateBook = async (req, res, next) => {
         ratings: [] // Initialiser avec un tableau vide
       });
       console.log(newBook);
+      console.log(newBook.imageUrl)
       // Save the book to the database avec un _id gratuit pas cher.
       await newBook.save();
   
