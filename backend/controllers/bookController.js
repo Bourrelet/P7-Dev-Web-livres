@@ -64,7 +64,7 @@ exports.deleteBook = async (req, res, next) => {
     await Book.findByIdAndDelete(bookId);
 
     // Supprimer l'image associée si elle existe
-    const imagePath = path.join(__dirname, '../uploads/', book.image); // ?? C'est quoi l'URL complete finalement? book.image c'est le fichier ... c'est un string .. donmc une url ?
+    const imagePath = path.join(__dirname, '../images/', book.imageUrl); // ?? C'est quoi l'URL complete finalement? book.image c'est le fichier ... c'est un string .. donmc une url ?
     if (fs.existsSync(imagePath)) {
       fs.unlinkSync(imagePath);  // Supprimer l'image
     }
@@ -150,14 +150,23 @@ exports.rateBook = async (req, res, next) => {
       if (!bookData || !image) { // si l'un des 2 est null ou undefined. erreur metier.
         return res.status(400).json({ message: 'Book details and image are required.' });
       }
-  
+
+      const MIME_TYPES = {
+        'image/jpg': 'jpg',
+        'image/jpeg': 'jpg',
+        'image/png': 'png'
+      };
+
+      
+      const extension = MIME_TYPES[image.mimetype];
+
       // Save the image using Sharp
-      const imageName = `${Date.now()}.jpeg`;
+      const imageName = `${Date.now()}` + '.'+ extension;
       const outputPath = path.join(__dirname, '../images', imageName); // chemin lcal -> URL disque
   
       await sharp(image.buffer)  // Recuperation du fichier dans la RAM
-        .resize({ width: 470, height: 600 })  // Redimensionne l'image
-        .toFormat('jpeg')  // Convertit au format jpeg
+        // .resize({ width: 470, height: 600 })  // Redimensionne l'image
+        .toFormat(extension)  // Convertit au format jpeg
         .toFile(outputPath);  // Sauvegarde sur le disque dans le dossier images/
   
       // Create a new book instance

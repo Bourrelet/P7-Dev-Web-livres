@@ -35,8 +35,9 @@ exports.loginUser = async (req, res, next) => { // On verifie les erreurs de log
       return res.status(400).json({ message: 'Mot de passe incorrect' });  
     }
 
-    const token = jwt.sign(userId, process.env.JWT_SECRET, { expiresIn: '1h' });  // Création du token avec dans le payload la variable userID qui contient l'id automatique de la DB de l'objet User
-    res.json({ token });  // Réponse avec le token
+    const token = jwt.sign({userId: userId}, process.env.JWT_SECRET, { expiresIn: '1h' });  // Création du token avec dans le payload la variable userID qui contient l'id automatique de la DB de l'objet User
+    res.json({ userId: userId,
+      token: token });  // Réponse avec le token
 
   } catch (error) {
     next(error);
