@@ -12,4 +12,3 @@ app.listen(config.port, () => {
   });
 
 
-console.log('JWT Secret depuis config:', config.jwtSecret);

@@ -25,12 +25,6 @@ router.post('/:id/rating', authMiddleware, bookController.rateBook);
 
 router.post('/', authMiddleware, upload.single('image'), bookController.addBook);  // -> Erreur de routage j'avais mis /:id ... forcement ca marchait pas.
     // add book
-// router.post('/:id', authMiddleware, upload.single('image'), (req, res, next) => {
-//     console.log('Multer middleware exécuté');
-//     next();
-//   }, bookController.addBook);
-  
-
 
 router.put('/:id', authMiddleware, upload.single('image'), bookController.updateBook);
     // update book

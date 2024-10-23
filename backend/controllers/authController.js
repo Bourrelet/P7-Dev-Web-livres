@@ -2,17 +2,17 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); 
 const User = require('../models/User'); 
 
-
+// Enregistrement nouvel utilisateur
 exports.signupUser = async (req, res, next) => { 
   try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);  // Hachage mdp
+    const hashedPassword = await bcrypt.hash(req.body.password, 10); 
 
     const newUser = new User({ 
       email: req.body.email,
       password: hashedPassword,
     });
 
-    await newUser.save();  // Svg user DB
+    await newUser.save(); 
 
     res.status(201).json({ message: 'Utilisateur créé avec succès' });  
   } catch (error) {
@@ -20,6 +20,7 @@ exports.signupUser = async (req, res, next) => {
   }
 };
 
+// Connexion utilisateur
 exports.loginUser = async (req, res, next) => {
   try {  
     const user = await User.findOne({ email: req.body.email });    

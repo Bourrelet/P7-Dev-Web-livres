@@ -5,9 +5,9 @@ const bookSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   title: { type: String, required: true },
   author: { type: String, required: true },
-  imageUrl: { type: String, required: true },  // Utiliser `imageUrl` pour correspondre au cahier des charges
-  year: { type: Number, required: true }, // Année de publication du livre
-  genre: { type: String, required: true }, // Genre du livre
+  imageUrl: { type: String, required: true },  
+  year: { type: Number, required: true }, 
+  genre: { type: String, required: true }, 
   ratings: [
     {
       userId: { type: String, required: true },
@@ -16,7 +16,7 @@ const bookSchema = new mongoose.Schema({
   ],  // Tableau d'évaluations
   averageRating: { type: Number, default: 0 },
 }, {
-  timestamps: true  // ???
+  timestamps: true  
 });
 
 module.exports = mongoose.model('Book', bookSchema);

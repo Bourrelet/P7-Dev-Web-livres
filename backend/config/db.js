@@ -1,4 +1,3 @@
-// require('dotenv').config(); //charge .env dans process.env
 const config = require('./config');
 const mongoose = require('mongoose');
 

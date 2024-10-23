@@ -1,8 +1,8 @@
 module.exports = (err, req, res, next) => {
-  console.error(err.stack);  // Log l'erreur pour le développement
-  const statusCode = err.status || 500;  // Par défaut, statut 500 pour les erreurs
+  console.error(err.stack); 
+  const statusCode = err.status || 500; // status specifique OU 500
   res.status(statusCode).json({
     status: 'error',
-    message: err.message || 'Une erreur est survenue',  // Utilise le message de l'erreur ou un message générique
+    message: err.message || 'Une erreur est survenue',  // message specifique OU generique
   });
 };

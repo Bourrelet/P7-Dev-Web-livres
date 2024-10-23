@@ -1,108 +1,96 @@
 const Book = require('../models/Book');
-const fs = require('fs');  // Pour supprimer le fichier image du disque
+const fs = require('fs'); 
 const path = require('path');
 const sharp = require('sharp');
 
+
+// Affiche tous les Book sur la page d'accueil.
 exports.getBooks = async (req, res, next) => {
   
     try {
       console.log("lancement getBooks");
-        const books = await Book.find();  // Récupérer tous les livres de la base de données
-        console.log(books);
-        res.status(200).json(books);  // Renvoie un tableau JSON avec tous les livres
-        }   catch (error) {
-        next(error);  // Passe l'erreur au middleware de gestion d'erreurs
+        const books = await Book.find();  
+        res.status(200).json(books);  
+
+        } catch (error) {
+        next(error);
     }
 };
 
+// Affiche la page d'un Book en particulier.
 exports.getBook = async (req, res, next) => {
   
     try {
       console.log("lancement getBook");
-        const bookId = req.params.id;  // Récupère le parametre dynamique de l'url de la requete.
-        const book = await Book.findById(bookId);  // Cherche le livre correspondant a l'id
+        const bookId = req.params.id; 
+        const book = await Book.findById(bookId); 
     
         if (!book) {
-          return res.status(404).json({ message: 'Livre non trouvé' });  // Si aucun livre n'est trouvé
+          return res.status(404).json({ message: 'Livre non trouvé' }); 
         }
     
-        res.status(200).json(book);  // Si le livre est trouvé, le renvoyer en réponse
+        res.status(200).json(book); 
       } catch (error) {
-        next(error);  // Envoie l'erreur au middleware de gestion des erreurs
+        next(error); 
       }
 };
 
+// Renvoit les 3 Book avec la meilleur note.
 exports.getBestRatedBooks = async (req, res, next) => {
   
     try {
       console.log("lancement getBestRatedBooks");
-      const bestBooks = await Book.find().sort({ averageRating: -1 }).limit(3);  // .sort() & .limit() -> methodes magiques Mongoose.
-      res.status(200).json(bestBooks);  // Renvoie les 3 livres avec la meilleure note
+      const bestBooks = await Book.find().sort({ averageRating: -1 }).limit(3);  
+      res.status(200).json(bestBooks); 
     } catch (error) {
-      next(error);  // Envoie l'erreur au middleware de gestion d'erreurs
+      next(error);  
     }
 };
 
+// Supprime le Book avec fs.
 exports.deleteBook = async (req, res, next) => {
   
   try {
     console.log("lancement deleteBook");
-    const bookId = req.params.id; // On  recupere l'ID du livre grace au paranetre dynamique
+    const bookId = req.params.id; 
 
-    const book = await Book.findById(bookId); // Methode mongoose pour trouver le livre par correspondance.
+    const book = await Book.findById(bookId); 
     
-    if (!book) { // En fait si mongoose ne trouve pas, il renvoit 'null' mais ne genere pas d'erreur -> Need une business error.
-      return res.status(404).send({ error: 'Livre non trouvé' }); // Sinon on pourrait throw new Error pour laisser le catch gerer ca avec le MW.
+    if (!book) { 
+      return res.status(404).send({ error: 'Livre non trouvé' }); 
     }
-    console.log("Livre recupere");
-    console.log(book);
-    // Vérifier si l'utilisateur authentifié est bien celui qui a créé le livre
+
     console.log(book.userId, req.user.userId);
-    if (book.userId != req.user.userId) { // -> UNDEFINED ???
+    if (book.userId != req.user.userId) { 
       return res.status(403).send({ error: '403: unauthorized request' });
     }
    
     await Book.findByIdAndDelete(bookId);
 
-    // Supprimer l'image associée si elle existe
-    const imagePath = path.join(__dirname, '../images/', book.imageUrl); // ?? C'est quoi l'URL complete finalement? book.image c'est le fichier ... c'est un string .. donmc une url ?
+
+    const imagePath = path.join(__dirname, '../images/', book.imageUrl); 
     if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);  // Supprimer l'image
+      fs.unlinkSync(imagePath);  
     }
 
     res.status(200).send({ message: 'Livre et image supprimés avec succès' });
   } catch (error) {
-    next(error); // Passer l'erreur au middleware de gestion d'erreurs
+    next(error); 
   }
 };
 
-
-exports.rateBook = async (req, res, next) => {
-  
-
-  // Probleme de coherence entre req.body et le modele
-  // req.body = { userId: String, rating: Number }
-  // ratings: [
-  //     {
-  //       userId: { type: String, required: true },
-  //       grade: { type: Number, required: true, min: 0, max: 5 }
-  //     }
-  // Probleme de coherence entre req.body et le modele
-    
-    
+// Attribue une note entre 1 et 5 au Book.
+exports.rateBook = async (req, res, next) => {  
     try {
       console.log("lancement rateBook");
-      //extraction variables
-      
-      const bookId = req.params.id; // On recupere l'id du book grace au parametre dynamique
-      const userId = req.body.userId; // extrait le userId de req.body
-      const grade = req.body.rating; // extrait rating de req.body et on le renomme correctement.
-      
-      // On pushera cet Objet dans la propriete-Array "ratings" de book -> conformement au modele
-      const userRating = { userId, grade }; 
+
+      // Definition des constantes
+      const bookId = req.params.id; 
+      const userId = req.body.userId; 
+      const grade = req.body.rating; // rating dans la requete ; grade dans le modele.      
+      const userRating = { userId, grade }; // Variable a push dans la propriete "ratings" du modele.
   
-      // Verification logique metier.
-  
+      // Verifications de logique metier avant push.
       if (grade < 0 || grade > 5) { // On s'assure que la note est OK.
         return res.status(400).json({ message: 'Rating must be between 0 and 5.' });
       }
@@ -117,50 +105,47 @@ exports.rateBook = async (req, res, next) => {
       if (alreadyRated) { 
         return res.status(400).json({ message: 'User has already rated this book.' });
       }
-      
-      // Verifications de logique metier terminees -> 
-      
-      book.ratings.push(userRating); // On push notre objet conformement au modele
+         
+      book.ratings.push(userRating);
       
   
-      // Calculer la nouvelle note moyenne
+      // Calcul et attribution de la moyenne.
       const totalRatings = book.ratings.length;
-      const sumRatings = book.ratings.reduce((sum, rate) => sum + rate.grade, 0); // JS classique
+      const sumRatings = book.ratings.reduce((sum, rate) => sum + rate.grade, 0); 
       book.averageRating = sumRatings / totalRatings;
   
-      // Sauvegarder les modifications dans la base de données
+      // Sauvegarde des modifications dans la DB
       await book.save();
   
-      // Répondre avec le livre mis à jour
       res.status(200).json(book);
     } catch (error) {
-      next(error); // Passer l'erreur au middleware de gestion des erreurs
+      next(error); 
     }
   };
   
-
+  // Ajout d'un livre dans la DB.
   exports.addBook = async (req, res, next) => {
     
     try {
       console.log("on lance le controlleur addbook");
 
-      const bookData = JSON.parse(req.body.book); // parce que express.json() ne fonctionne pas pour formData.
-      const image = req.file; // Multer analyse la requete et extrait le fichier dans un objet.
+      const bookData = JSON.parse(req.body.book); 
+      const image = req.file; 
   
-      if (!bookData || !image) { // logique metier.
+      if (!bookData || !image) { 
         return res.status(400).json({ message: 'Book details and image are required.' });
       }
 
-      const imageName = `${Date.now()}.jpg`; // Genere un nom unique pour l'image
-      const imageUrl = `http://localhost:4000/images/${imageName}`; // URL relative ; Acces navigateur via express; (!= ports front/back)
-      const outputPath = path.join(__dirname, '../images', imageName); // URL absolue ; chemin local ; emplacement disque.
+      const imageName = `${Date.now()}.jpg`; 
+      const imageUrl = `http://localhost:4000/images/${imageName}`; // URL relative
+      const outputPath = path.join(__dirname, '../images', imageName); // URL absolue
 
-      await sharp(image.buffer)  // Recuperation du fichier dans la RAM
+      await sharp(image.buffer) 
         .resize({ width: 463, height: 595 })  
         .toFormat('jpeg')  
-        .toFile(outputPath);  // Sauvegarde en local
+        .toFile(outputPath); 
       
-      // Create a new book instance
+      
       const newBook = new Book({
         title: bookData.title,
         author: bookData.author,
@@ -180,32 +165,29 @@ exports.rateBook = async (req, res, next) => {
     }
   };
 
-
+// Met a jour le livre ; Helpers -> updateFile & updateBody
 exports.updateBook = async (req, res, next) => {
   try {
     console.log("lancement updateBook");
-    const { id } = req.params; // Extract book ID from request params
-
-        // Find the book by ID
-    const book = await Book.findById(id);
+      const { id } = req.params;
+      const book = await Book.findById(id);
     if (!book) {
       return res.status(404).json({ message: 'Book not found.' });
     }
 
-    // Check if the authenticated user is the creator of the book
     if (book.userId !== req.user.userId) {
       return res.status(403).json({ message: 'Unauthorized request.' });
     }
 
-    // If neither body nor file is provided, return an error
+  
     if (!req.file && !req.body) {
       return res.status(400).json({ message: 'No data provided for update.' });
     }
 
-    // Execute file and body updates concurrently
-    await Promise.all([updateFile(book, req), updateBody(book, req)]); // pas besoin de stocker les resultats des promesses.
+  
+    await Promise.all([updateFile(book, req), updateBody(book, req)]); // helpers
 
-    // Respond with success message
+   
     res.status(200).json({ message: 'Book successfully updated!' });
   } catch (error) {
     next(error);
@@ -219,35 +201,35 @@ exports.updateBook = async (req, res, next) => {
 
 //Helper req.file ->
 const updateFile = async (book, req) => {
+
   if (req.file) {
-    if (!req.file.mimetype.startsWith('image/')) { // verifie que c bien une image grace au mimetype
+
+    if (!req.file.mimetype.startsWith('image/')) { 
       console.error('Invalid file type: Only image files are allowed.');
-      throw new Error('Only image files are allowed!'); // On balance l'erreur expres pour qu'elle remonte la chaine d'appel. 
+      throw new Error('Only image files are allowed!'); // Bubbling
     }
 
-    // Delete old image if it exists
-    if (book.imageUrl) { // on verifie que c'est bien la bonne propriete.
-      try { // await fs.promises -> Pour etre sur que la suppression soit faite avant de passer a l'update.
-        const imageName = book.imageUrl.split('/images/')[1]; // On extrait juste le nom de l'image
-        const oldImagePath = path.join(__dirname, '../images', imageName); // Chemin absolu de l'ancienne image
-        await fs.promises.unlink(oldImagePath); 
-      } catch (err) {
-        console.error('Failed to delete old image:', err);
-        throw new Error('Failed to delete the old image, please try again.'); // Comme une bulle (Helper -> controleur -> MW)
-      } 
-    }
+    try { 
+      const oldImageName = book.imageUrl.split('/images/')[1]; 
+      const oldImagePath = path.join(__dirname, '../images', oldImageName); 
+      await fs.promises.unlink(oldImagePath); 
+    } catch (err) {
+      console.error('Failed to delete old image:', err);
+      throw new Error('Failed to delete the old image, please try again.'); // Bubbling
+    } 
+    
 
-    const image = req.file; // Multer analyse la requete et extrait le fichier dans un objet.
-    const imageName = `${Date.now()}.jpg`; // Genere un nom unique pour l'image
-    const imageUrl = `http://localhost:4000/images/${imageName}`; // URL relative ; Acces navigateur via express; (!= ports front/back)
-    const outputPath = path.join(__dirname, '../images', imageName); // URL absolue ; chemin local ; emplacement disque.
+    const image = req.file; 
+    const imageName = `${Date.now()}.jpg`; 
+    const imageUrl = `http://localhost:4000/images/${imageName}`; // URL relative ; 
+    const outputPath = path.join(__dirname, '../images', imageName); // URL absolue ;
 
-    await sharp(image.buffer)  // Recuperation du fichier dans la RAM
+    await sharp(image.buffer) 
       .resize({ width: 463, height: 595 })  
       .toFormat('jpeg')  
-      .toFile(outputPath);  // Sauvegarde en local
+      .toFile(outputPath); 
 
-    // Update the book with the new image URL
+    
     return Book.findByIdAndUpdate(book._id, { imageUrl: imageUrl }, { new: true, runValidators: true });
   }
   return null;
@@ -256,7 +238,7 @@ const updateFile = async (book, req) => {
 // Helper req.body
 const updateBody = async (book, req) => {
   if (req.body) { 
-    return Book.findByIdAndUpdate(book._id, req.body, { new: true, runValidators: true }); // runValidators permet de s'assurer que le modele est respecte pour les propriete renseignees.
+    return Book.findByIdAndUpdate(book._id, req.body, { new: true, runValidators: true }); 
   }
   return null;
 };
