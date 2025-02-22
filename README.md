@@ -1,6 +1,6 @@
 # Book Management REST API (Node.js / Express / MongoDB)
 
-Handmade Backend project by Eva ; featuring a Node.js REST API built with Express, connected to a MongoDB database using Mongoose. 
+Handmade Backend project by Eva ; project built from scratch by me and myself, featuring a Node.js REST API built with Express, connected to a MongoDB database using Mongoose. 
 This API manages CRUD operations for "Books" and "Users," including image uploads with resizing using Sharp, as well as secure user authentication and registration.
 
 ## Objectives
